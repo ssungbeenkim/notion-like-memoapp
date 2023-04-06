@@ -63,7 +63,7 @@ body {
 .banner__title {
   margin: 20px;
   color: var(--accent-color);
-  user-select: none;
+  
 }
 
 .control-panel {
