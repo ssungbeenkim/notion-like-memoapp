@@ -11,12 +11,22 @@ export class VideoComponent extends BaseComponent<HTMLElement> {
     const iframe = this.element.querySelector(
       '.video__iframe'
     )! as HTMLIFrameElement;
-    console.log(url);
-    iframe.src = `https://www.youtube.com/embed/XIOoqJyx8E4`; // url -> video -> embed
-
+    iframe.src = this.convertToEmbeddedURL(url); // url -> video -> embed
     const titleElement = this.element.querySelector(
       '.video__title'
     )! as HTMLHeadingElement;
     titleElement.textContent = title;
+  }
+
+  private convertToEmbeddedURL(url: string): string {
+    const regex =
+      /(?:https?:\/\/)?(?:www\.)?(?:youtu\.?be)(?:(?:\.com|\/)\/?)(?:watch\?)?(?:v=)?([a-zA-Z0-9]{11})/;
+    const match = url.match(regex);
+    const videoId = match ? match[1] : undefined;
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}`;
+    } else {
+      return url;
+    }
   }
 }
