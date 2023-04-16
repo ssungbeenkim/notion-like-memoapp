@@ -1,4 +1,8 @@
-import { Composable, PageComponent } from './components/page/page.js';
+import {
+  Composable,
+  PageComponent,
+  PageItemComponent,
+} from './components/page/page.js';
 import { Component } from './components/Component.js';
 import { ImageComponent } from './components/page/item/image.js';
 import { TodoComponent } from './components/page/item/todo.js';
@@ -7,7 +11,7 @@ import { NoteComponent } from './components/page/item/note.js';
 class App {
   private readonly page: Component & Composable;
   constructor(appRoot: HTMLElement) {
-    this.page = new PageComponent(); // dependency injection이 낫기는 하다.
+    this.page = new PageComponent(PageItemComponent); // dependency injection이 낫기는 하다.
     this.page.attachTo(appRoot);
 
     const image = new ImageComponent(
