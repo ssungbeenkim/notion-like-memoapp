@@ -6,8 +6,8 @@ export interface Composable {
 type OnCloseListener = () => void;
 
 type SectionContainerConstructor = {
-  //
-  new (): SectionContainer;
+  //*생성자를 전달.
+  new (): SectionContainer; // 아무것도 받지 않는 생성자가 있고, SectionContainer를 구현하는 어떤 클래스든 포함한다.
 };
 //https://www.typescriptlang.org/docs/handbook/interfaces.html#difference-between-the-static-and-instance-sides-of-classes
 
@@ -49,6 +49,7 @@ export class PageComponent
   extends BaseComponent<HTMLUListElement>
   implements Composable
 {
+  // 어떤 타입의 pageItemConstructor를 받아도 되도록 해서 좀더 유연하고 확장 가능하게 만들었다.
   constructor(private pageItemConstructor: SectionContainerConstructor) {
     super('<ul class="page"></ul>');
   }
