@@ -1,4 +1,5 @@
 /* 랜덤 이미지 https://picsum.photos/600/300 */
+// 유튜브
 import {
   Composable,
   PageComponent,
@@ -11,40 +12,62 @@ import { VideoComponent } from './components/page/item/video.js';
 import { NoteComponent } from './components/page/item/note.js';
 import { InputDialog } from './components/dialog/dialog.js';
 import { MediaSectionInput } from './components/dialog/input/media-input.js';
+import { TextSectionInput } from './components/dialog/input/text-input.js';
+
+type InputComponentConstructor<T = MediaSectionInput | TextSectionInput> = {
+  new (): T;
+};
 
 class App {
   private readonly page: Component & Composable;
-  constructor(appRoot: HTMLElement, dialogRoot: HTMLElement) {
+  constructor(appRoot: HTMLElement, private dialogRoot: HTMLElement) {
     this.page = new PageComponent(PageItemComponent); // dependency injection이 낫기는 하다.
     this.page.attachTo(appRoot);
 
-    const note = new NoteComponent('Note Title', 'Note Body');
-    this.page.addChild(note);
-
-    const todo = new TodoComponent('Todo Title', 'Todo Item');
-    this.page.addChild(todo);
-
-    const video = new VideoComponent(
-      'Video Title',
-      'https://youtu.be/XIOoqJyx8E4'
+    this.bindElementToDialog<MediaSectionInput>(
+      '#new-image',
+      MediaSectionInput,
+      (input: MediaSectionInput) => new ImageComponent(input.title, input.url)
     );
-    this.page.addChild(video);
 
-    const imageBtn = document.querySelector('#new-image')! as HTMLButtonElement;
-    imageBtn.addEventListener('click', () => {
+    this.bindElementToDialog<MediaSectionInput>(
+      '#new-video',
+      MediaSectionInput,
+      (input: MediaSectionInput) => new VideoComponent(input.title, input.url)
+    );
+
+    this.bindElementToDialog<TextSectionInput>(
+      '#new-note',
+      TextSectionInput,
+      (input: TextSectionInput) => new NoteComponent(input.title, input.body)
+    );
+
+    this.bindElementToDialog<TextSectionInput>(
+      '#new-todo',
+      TextSectionInput,
+      (input: TextSectionInput) => new TodoComponent(input.title, input.body)
+    );
+  }
+
+  private bindElementToDialog<T extends MediaSectionInput | TextSectionInput>(
+    selector: string,
+    InputComponent: InputComponentConstructor<T>,
+    makeSection: (input: T) => Component
+  ) {
+    const element = document.querySelector(selector)! as HTMLButtonElement;
+    element.addEventListener('click', () => {
       const dialog = new InputDialog();
-      const mediaSection = new MediaSectionInput();
-      dialog.addChild(mediaSection);
-      console.log(dialogRoot);
-      dialog.attachTo(dialogRoot);
+      const input = new InputComponent();
+      dialog.addChild(input);
+      dialog.attachTo(this.dialogRoot);
 
       dialog.setOnCloseListener(() => {
-        dialog.removeFrom(dialogRoot);
+        dialog.removeFrom(this.dialogRoot);
       });
       dialog.setOnSubmitListener(() => {
-        const image = new ImageComponent(mediaSection.title, mediaSection.url);
-        this.page.addChild(image);
-        dialog.removeFrom(dialogRoot);
+        const section = makeSection(input);
+        this.page.addChild(section);
+        dialog.removeFrom(this.dialogRoot);
       });
     });
   }
