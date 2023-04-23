@@ -10,18 +10,22 @@ import { ImageComponent } from './components/page/item/image.js';
 import { TodoComponent } from './components/page/item/todo.js';
 import { VideoComponent } from './components/page/item/video.js';
 import { NoteComponent } from './components/page/item/note.js';
-import { InputDialog } from './components/dialog/dialog.js';
+import {
+  InputDialog,
+  MediaData,
+  TextData,
+} from './components/dialog/dialog.js';
 import { MediaSectionInput } from './components/dialog/input/media-input.js';
 import { TextSectionInput } from './components/dialog/input/text-input.js';
 
-type InputComponentConstructor<T = MediaSectionInput | TextSectionInput> = {
+type InputComponentConstructor<T extends (MediaData | TextData) & Component> = {
   new (): T;
 };
 
 class App {
   private readonly page: Component & Composable;
   constructor(appRoot: HTMLElement, private dialogRoot: HTMLElement) {
-    this.page = new PageComponent(PageItemComponent); // dependency injection이 낫기는 하다.
+    this.page = new PageComponent(PageItemComponent);
     this.page.attachTo(appRoot);
 
     this.bindElementToDialog<MediaSectionInput>(
@@ -49,7 +53,7 @@ class App {
     );
   }
 
-  private bindElementToDialog<T extends MediaSectionInput | TextSectionInput>(
+  private bindElementToDialog<T extends (MediaData | TextData) & Component>(
     selector: string,
     InputComponent: InputComponentConstructor<T>,
     makeSection: (input: T) => Component
