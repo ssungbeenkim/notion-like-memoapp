@@ -4,21 +4,25 @@ export interface Composable {
   addChild(child: Component): void;
 }
 type OnCloseListener = () => void;
-type SectionContainerConstructor = {
-  //*생성자를 전달.
-  new (): SectionContainer; // 아무것도 인자를 받지 않는 생성자가 있고, SectionContainer를 구현하는 어떤 클래스든 포함한다.
-};
-//https://www.typescriptlang.org/docs/handbook/interfaces.html#difference-between-the-static-and-instance-sides-of-classes
-
+type DragState = 'start' | 'end' | 'enter' | 'leave';
+type OnDragStateListener<T extends Component> = (
+  target: T,
+  state: DragState
+) => void;
 interface SectionContainer extends Component, Composable {
   setOnCloseListener(listener: OnCloseListener): void;
+  setOnDragStateListener(listener: OnDragStateListener<SectionContainer>): void;
 }
+type SectionContainerConstructor = {
+  new (): SectionContainer; // 아무것도 인자를 받지 않는 생성자가 있고, SectionContainer를 구현하는 어떤 클래스든 포함한다.
+};
 
 export class PageItemComponent
   extends BaseComponent<HTMLElement>
   implements SectionContainer
 {
   private closeListener?: OnCloseListener;
+  private dragStateListener?: OnDragStateListener<PageItemComponent>;
   constructor() {
     super(`<li draggable="true" class="page-item">
             <section class="page-item__body"></section>
@@ -36,14 +40,29 @@ export class PageItemComponent
     this.element.addEventListener('dragend', (event: DragEvent) => {
       this.onDragEnd(event);
     });
+    this.element.addEventListener('dragenter', (event: DragEvent) => {
+      this.onDragEnter(event);
+    });
+    this.element.addEventListener('dragleave', (event: DragEvent) => {
+      this.onDragLeave(event);
+    });
   }
 
-  onDragStart(event: DragEvent) {
-    console.log('dragstart', event);
+  onDragStart(_: DragEvent) {
+    this.notifyDragObservers('start');
+  }
+  onDragEnd(_: DragEvent) {
+    this.notifyDragObservers('end');
+  }
+  onDragEnter(_: DragEvent) {
+    this.notifyDragObservers('enter');
+  }
+  onDragLeave(_: DragEvent) {
+    this.notifyDragObservers('leave');
   }
 
-  onDragEnd(event: DragEvent) {
-    console.log('dragend', event);
+  notifyDragObservers(state: DragState) {
+    this.dragStateListener && this.dragStateListener(this, state);
   }
 
   addChild(child: Component) {
@@ -55,6 +74,9 @@ export class PageItemComponent
 
   setOnCloseListener(listener: OnCloseListener) {
     this.closeListener = listener;
+  }
+  setOnDragStateListener(listener: OnDragStateListener<PageItemComponent>) {
+    this.dragStateListener = listener;
   }
 }
 
@@ -71,17 +93,14 @@ export class PageComponent
       this.onDrop(event);
     });
   }
-
   onDragOver(event: DragEvent) {
     event.preventDefault();
-    console.log('onDragOver', event);
+    console.log('onDragOver');
   }
-
   onDrop(event: DragEvent) {
     event.preventDefault();
-    console.log('onDrop', event);
+    console.log('onDrop');
   }
-
   addChild(section: Component) {
     const item = new this.pageItemConstructor();
     item.addChild(section);
@@ -89,5 +108,10 @@ export class PageComponent
     item.setOnCloseListener(() => {
       item.removeFrom(this.element);
     });
+    item.setOnDragStateListener(
+      (target: SectionContainer, state: DragState) => {
+        console.log(target, state);
+      }
+    );
   }
 }
