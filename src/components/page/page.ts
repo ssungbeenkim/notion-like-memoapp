@@ -13,6 +13,7 @@ interface SectionContainer extends Component, Composable {
   setOnCloseListener(listener: OnCloseListener): void;
   setOnDragStateListener(listener: OnDragStateListener<SectionContainer>): void;
   muteChildren(state: 'mute' | 'unmute'): void;
+  getBoundingRect(): DOMRect;
 }
 type SectionContainerConstructor = {
   new (): SectionContainer; // 아무것도 인자를 받지 않는 생성자가 있고, SectionContainer를 구현하는 어떤 클래스든 포함한다.
@@ -83,6 +84,9 @@ export class PageItemComponent
       this.element.classList.remove('mute-children');
     }
   }
+  getBoundingRect(): DOMRect {
+    return this.element.getBoundingClientRect();
+  }
 }
 
 export class PageComponent
@@ -100,24 +104,25 @@ export class PageComponent
     });
     this.element.addEventListener('drop', (event: DragEvent) => {
       this.onDrop(event);
-      // 여기에서 위치를 바꿔준다.
-      if (!this.dropTarget) {
-        return;
-      }
-      if (this.dragTarget && this.dragTarget !== this.dropTarget) {
-        this.dragTarget.removeFrom(this.element);
-        this.dropTarget.attach(this.dragTarget, 'beforebegin');
-      }
     });
   }
   onDragOver(event: DragEvent) {
     event.preventDefault();
-    console.log('onDragOver');
   }
   onDrop(event: DragEvent) {
     event.preventDefault();
-    console.log('onDrop');
-    // 여기서 위치를 바꿔준다.
+    if (!this.dropTarget) {
+      return;
+    }
+    if (this.dragTarget && this.dragTarget !== this.dropTarget) {
+      const dropY = event.clientY;
+      const srcElement = this.dragTarget.getBoundingRect();
+      this.dragTarget.removeFrom(this.element);
+      this.dropTarget.attach(
+        this.dragTarget,
+        dropY < srcElement.y ? 'beforebegin' : 'afterend'
+      );
+    }
   }
   addChild(section: Component) {
     const item = new this.pageItemConstructor();
